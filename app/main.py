@@ -4,6 +4,8 @@ from app.ocr import extract_text
 from app.extractor import extract_candidate_tests
 from app.parser import parse_test_line
 from app.normalizer import normalize_test
+from app.explainer import explain_tests
+
 
 
 app = FastAPI(title="Medical Report Simplifier")
@@ -42,7 +44,12 @@ def simplify_report(request: InputRequest):
             }
         normalized_tests.append(normalized)
 
+    explanation = explain_tests(normalized_tests)
+
     return {
         "tests": normalized_tests,
+        "summary": explanation["summary"],
+        "explanations": explanation["explanations"],
         "status": "ok"
     }
+
