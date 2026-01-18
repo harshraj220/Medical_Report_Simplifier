@@ -3,9 +3,10 @@ from app.schemas import InputRequest
 from app.ocr import extract_text
 from app.extractor import extract_candidate_tests
 from app.parser import parse_test_line
+from app.normalizer import normalize_test
+
 
 app = FastAPI(title="Medical Report Simplifier")
-
 
 
 @app.post("/simplify")
@@ -19,8 +20,8 @@ def simplify_report(request: InputRequest):
             "reason": "no valid medical tests found"
         }
 
+    # STEP 3: Parsing
     parsed_tests = []
-
     for line in candidate_tests:
         parsed = parse_test_line(line)
         if not parsed:
@@ -30,7 +31,18 @@ def simplify_report(request: InputRequest):
             }
         parsed_tests.append(parsed)
 
+    # STEP 4: Normalization
+    normalized_tests = []
+    for test in parsed_tests:
+        normalized = normalize_test(test)
+        if not normalized:
+            return {
+                "status": "unprocessed",
+                "reason": "unknown test normalization"
+            }
+        normalized_tests.append(normalized)
+
     return {
-        "tests": parsed_tests,
-        "confidence": confidence
+        "tests": normalized_tests,
+        "status": "ok"
     }
