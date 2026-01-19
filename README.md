@@ -1,124 +1,217 @@
-# Medical Report Simplifier
+## 🩺 AI-Powered Medical Report Simplifier (Backend)
 
-A FastAPI-based web service for simplifying medical reports by extracting and structuring test information from raw text input.
+This project implements **Problem Statement 3: AI-Powered Medical Report Simplifier** from the SDE Intern Backend assignment.
 
-## Features
+The service accepts **medical reports (text or scanned images)** and returns:
 
-- **Text Extraction**: Parse and clean medical test data from raw text strings
-- **Structured Output**: Convert comma-separated or line-based test results into structured lists
-- **Confidence Scoring**: Provides extraction confidence levels
-- **RESTful API**: Simple HTTP endpoint for processing medical reports
-- **Extensible Design**: Ready for future image OCR integration
+* Structured medical test results
+* Normalized values with reference ranges
+* Patient-friendly explanations
+  while ensuring **no hallucinated data** is introduced.
 
-## Installation
+---
 
-1. Clone the repository:
-```bash
-git clone <repository-url>
-cd plum_Assessment
+## ✨ Key Features
+
+* Supports **text and image inputs** (OCR ready)
+* Robust **multi-step processing pipeline**
+* Strict **guardrails** to prevent hallucinations
+* Deterministic medical normalization
+* Safe, non-diagnostic patient explanations
+* Clean REST API with JSON responses
+
+---
+
+## 🧠 Processing Pipeline
+
+```
+Input (text / image)
+   ↓
+OCR / Text Extraction
+   ↓
+Candidate Test Detection
+   ↓
+Structured Parsing
+   ↓
+Normalization (Reference Ranges)
+   ↓
+Patient-Friendly Explanation
+   ↓
+Final JSON Output
 ```
 
-2. Create and activate a virtual environment (optional but recommended):
+Each step is isolated, validated, and tested independently.
+
+---
+
+## 🛡️ Guardrails & Safety
+
+The system **intentionally stops processing** when unsafe or ambiguous input is detected.
+
+### Guardrail Conditions
+
+* No medical tests found
+* Unable to parse test values
+* Unknown tests without reference ranges
+* Prevents hallucinated tests or explanations
+
+Example guardrail response:
+
+```json
+{
+  "status": "unprocessed",
+  "reason": "unknown test normalization"
+}
+```
+
+---
+
+## 🚀 How to Run Locally
+
+### 1️⃣ Create Virtual Environment
+
 ```bash
 python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
+source venv/bin/activate   # macOS / Linux
+venv\Scripts\activate      # Windows
 ```
 
-3. Install dependencies:
+### 2️⃣ Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-## Usage
+### 3️⃣ Start Server
 
-### Running the Server
-
-Start the FastAPI server with:
 ```bash
-uvicorn app.main:app --reload
+uvicorn app.main:app
 ```
 
-The server will start at `http://127.0.0.1:8000`
+Server runs at:
 
-### API Documentation
+```
+http://127.0.0.1:8000
+```
 
-Once running, visit `http://127.0.0.1:8000/docs` for interactive Swagger UI documentation.
+Swagger UI:
 
-### API Endpoint
+```
+http://127.0.0.1:8000/docs
+```
 
-**POST /simplify**
+---
 
-Process medical report text to extract test information.
+## 📡 API Usage
 
-#### Request Body
+### Endpoint
+
+```
+POST /simplify
+```
+
+### Request (Text Input)
+
 ```json
 {
   "type": "text",
-  "content": "Hemoglobin 10.2 g/dL (Low)"
+  "content": "Hemoglobin 10.2 g/dL (Low), WBC 9000 /uL"
 }
 ```
 
-#### Response
+---
+
+## ✅ Example Responses
+
+### Normal WBC
+
 ```json
 {
-  "tests_raw": [
-    "Hemoglobin 10.2 g/dL (Low)"
+  "tests": [
+    {
+      "name": "WBC",
+      "value": 9000,
+      "unit": "/uL",
+      "status": "normal",
+      "ref_range": {
+        "low": 4000,
+        "high": 11000
+      }
+    }
   ],
-  "confidence": 0.95
+  "summary": "White blood cell count is within the normal range.",
+  "explanations": [
+    "A normal white blood cell count generally suggests no active infection."
+  ],
+  "status": "ok"
 }
 ```
 
-### Testing the API
+---
 
-You can test the endpoint using curl:
+### Low Hemoglobin
 
-```bash
-curl -X POST "http://127.0.0.1:8000/simplify" \
-     -H "Content-Type: application/json" \
-     -d '{
-       "type": "text",
-       "content": "Hemoglobin: 14.5 g/dL, WBC: 8.2 x10^9/L"
-     }'
+```json
+{
+  "tests": [
+    {
+      "name": "Hemoglobin",
+      "value": 10.2,
+      "unit": "g/dL",
+      "status": "low",
+      "ref_range": {
+        "low": 12.0,
+        "high": 15.0
+      }
+    }
+  ],
+  "summary": "Hemoglobin level is lower than normal.",
+  "explanations": [
+    "Low hemoglobin levels may be associated with anemia."
+  ],
+  "status": "ok"
+}
 ```
 
-## Project Structure
+---
+
+## 📂 Project Structure
 
 ```
-plum_Assessment/
-├── requirements.txt          # Python dependencies
-├── app/
-│   ├── main.py              # FastAPI application and routes
-│   ├── ocr.py               # Text extraction and processing logic
-│   └── schemas.py           # Pydantic data models
-├── venv/                    # Virtual environment (created during setup)
-└── README.md                # This file
+app/
+ ├── main.py          # API entry point
+ ├── schemas.py       # Request schemas
+ ├── ocr.py           # Text / OCR extraction
+ ├── extractor.py     # Candidate test detection
+ ├── parser.py        # Structured parsing
+ ├── normalizer.py    # Reference range normalization
+ ├── explainer.py     # Patient-friendly explanations
+ └── __init__.py
 ```
 
-## Dependencies
+---
 
-- **FastAPI**: Web framework for building APIs with automatic OpenAPI docs
-- **Uvicorn**: ASGI server for running FastAPI applications
-- **Pydantic**: Data validation and serialization using Python type hints
-- **Pillow**: Image processing library (prepared for future OCR features)
-- **Pytesseract**: Python wrapper for Tesseract OCR (prepared for future use)
+## 🧪 Testing
 
-## Development Notes
+All pipeline steps were tested using `curl` with:
 
-- **Current Implementation**: Only text input processing is implemented. Image OCR functionality is a placeholder.
-- **Future Enhancements**: 
-  - Implement image upload and OCR processing
-  - Add more sophisticated text parsing for medical reports
-  - Include validation for medical test formats
-  - Add authentication and rate limiting
+* Normal values
+* High / Low values
+* Unknown tests (guardrails)
 
-## Contributing
+---
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Test thoroughly
-5. Submit a pull request
+## 🎯 Notes
 
-## License
+* Reference ranges are **hardcoded intentionally** for deterministic behavior.
+* Explanations use **template-based logic** to avoid hallucinations.
+* The system is **non-diagnostic** and for informational purposes only.
 
-[Add license information here]
+---
+
+## 👤 Author
+
+**Harsh**
+
+
+

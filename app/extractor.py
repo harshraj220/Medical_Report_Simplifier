@@ -1,6 +1,6 @@
 import re
 
-UNIT_PATTERN = r"(g/dL|mg/dL|/uL|mmol/L|%)"
+UNIT_PATTERN = r"(M/uL|g/dL|mg/dL|/uL|mmol/L|%)"
 
 def extract_candidate_tests(tests_raw):
     candidates = []
