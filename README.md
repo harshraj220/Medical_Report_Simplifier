@@ -209,6 +209,18 @@ All pipeline steps were tested using `curl` with:
 
 ---
 
+
+## Tech Stack Note
+
+This project is implemented in Python for rapid prototyping of AI pipelines.
+The same architecture can be implemented in Node.js or Java using equivalent
+libraries (e.g., Tesseract OCR, regex-based parsing, rule engines).
+
+I am comfortable translating this logic across stacks and focused here on
+correctness, guardrails, and AI safety.
+
+---
+
 ## 👤 Author
 
 **Harsh**
